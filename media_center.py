@@ -6,11 +6,30 @@ import argparse
 import pathlib
 import socket
 
+PLAY_CMD = None
+MEDIA_FOLDER = None
+PROCESSES = []
+
 def send_str(conn: socket.socket, to_send: str):
     conn.send(f'{to_send}\r\n'.encode("utf-8"))
 
-def play_video(video_file):
-    pass
+def play_videos(video_files, folder=None):
+    global PLAY_CMD
+    video_files_with_media_folder = []
+    if folder is None:
+        video_files_with_media_folder = video_files[:]
+    else:
+        for video_file in video_files:
+            video_files_with_media_folder.append(folder / video_file)
+    proc = subprocess.Popen([*PLAY_CMD, *video_files_with_media_folder])
+    PROCESSES.append(proc)
+    returnCode = proc.wait()
+    return returnCode
+
+def stop_videos():
+    global PROCESSES
+    for proc in PROCESSES:
+        proc.terminate()
 
 def handle_sent_data(conn: socket.socket, addr: tuple, data: str):
     to_send = "Invalid command"
@@ -18,19 +37,39 @@ def handle_sent_data(conn: socket.socket, addr: tuple, data: str):
     args = None
 
     cmd, *args = data.split()
+    kwargs = None
     if cmd == "PLAY":
-        pass
+        action = play_videos
+        kwargs = {"folder": MEDIA_FOLDER}
+    elif cmd == "STOP":
+        action = stop_videos
+        args = None
+        kwargs = None
+    elif cmd == "PLAY_NO_PREFIX":
+        action = play_videos
 
     print(f'Sending to "{addr}": "{to_send}"')
-    send_str(conn, to_send)
     if action is not None:
-        print(f'Executing action "{action}"', end="")
-        if args is not None:
-            print(f' with args "{args}"')
-            action(*args)
-        else:
+        print(f'Executing action "{action.__name__}"', end="")
+        if args is None and kwargs is None:
             print()
-            action()
+            return_code = action()
+        elif args is not None and kwargs is not None:
+            print(f' with args "{args}" and kwargs "{kwargs}"')
+            return_code = action(args, **kwargs)
+        elif args is not None:
+            print(f' with args "{args}"')
+            return_code = action(args)
+        elif kwargs is not None:
+            print(f' with kwargs "{kwargs}"')
+            return_code = action(**kwargs)
+        # no elses, all 2**2 cases are covered
+
+        if return_code == 0:
+            to_send = "OK"
+        else:
+            to_send = f"Error with code {return_code}"
+    send_str(conn, to_send)
 
 def handle_connection(conn: socket.socket, addr: tuple):
     with conn:
@@ -53,6 +92,10 @@ def handle_connection(conn: socket.socket, addr: tuple):
                 break
 
 def main(args: argparse.Namespace):
+    global PLAY_CMD, MEDIA_FOLDER
+    PLAY_CMD = args.play_script.split()
+    MEDIA_FOLDER = args.media_folder
+
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.bind((args.bind_host, args.bind_port))
@@ -68,8 +111,8 @@ def main(args: argparse.Namespace):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("folder", type=pathlib.Path)
+    ap.add_argument("media_folder", type=pathlib.Path)
     ap.add_argument("--bind-host", default="")
     ap.add_argument("--bind-port", type=int, default=2999)
-    ap.add_argument("--test-mode", action="store_true")
+    ap.add_argument("--play-script", default="mpv")
     main(ap.parse_args())
