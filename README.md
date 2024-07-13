@@ -17,7 +17,7 @@ these commands:
   As the command name suggests, play the n video files
 
 - `PLAY_NO_PREFIX <video file 1> ... <video file n>`
-  Just as above but don't prepend any prefix, useful for youtube videso
+  Just as above but don't prepend any prefix, useful for youtube videos
   (are there any other use cases? 🤔)
 
 - `STOP`
