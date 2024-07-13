@@ -10,7 +10,7 @@ PLAY_CMD = None
 MEDIA_FOLDER = None
 PROCESSES = []
 
-def send_str(conn: socket.socket, to_send: str):
+def send_str(conn: socket.socket, to_send: object):
     conn.send(f'{to_send}\r\n'.encode("utf-8"))
 
 def play_videos(video_files, folder=None):
