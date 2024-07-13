@@ -30,6 +30,7 @@ def stop_videos():
     global PROCESSES
     for proc in PROCESSES:
         proc.terminate()
+    return 0
 
 def list_files(conn: socket.socket, folder: pathlib.Path):
     send_str(conn, list(folder.rglob("*")))
