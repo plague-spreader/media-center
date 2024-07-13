@@ -71,10 +71,10 @@ def handle_sent_data(conn: socket.socket, addr: tuple, data: str):
             return_code = action()
         elif args is not None and kwargs is not None:
             print(f' with args "{args}" and kwargs "{kwargs}"')
-            return_code = action(args, **kwargs)
+            return_code = action(*args, **kwargs)
         elif args is not None:
             print(f' with args "{args}"')
-            return_code = action(args)
+            return_code = action(*args)
         elif kwargs is not None:
             print(f' with kwargs "{kwargs}"')
             return_code = action(**kwargs)
