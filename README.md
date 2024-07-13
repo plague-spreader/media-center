@@ -23,4 +23,7 @@ these commands:
 - `STOP`
   Stop all videos
 
+- `LS`
+  List (recursively) all files
+
 To stop the server just send SIGINT

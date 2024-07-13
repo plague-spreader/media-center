@@ -31,6 +31,10 @@ def stop_videos():
     for proc in PROCESSES:
         proc.terminate()
 
+def list_files(conn: socket.socket, folder: pathlib.Path):
+    send_str(conn, list(folder.rglob("*")))
+    return 0
+
 def handle_sent_data(conn: socket.socket, addr: tuple, data: str):
     to_send = "Invalid command"
     action = None
@@ -47,6 +51,10 @@ def handle_sent_data(conn: socket.socket, addr: tuple, data: str):
         kwargs = None
     elif cmd == "PLAY_NO_PREFIX":
         action = play_videos
+    elif cmd == "LS":
+        action = list_files
+        args = [conn, MEDIA_FOLDER]
+        kwargs = None
 
     print(f'Sending to "{addr}": "{to_send}"')
     if action is not None:
