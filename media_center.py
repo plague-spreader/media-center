@@ -33,7 +33,10 @@ def stop_videos():
     return 0
 
 def list_files(conn: socket.socket, folder: pathlib.Path):
-    send_str(conn, list(folder.rglob("*")))
+    to_send = []
+    for file in folder.rglob("*"):
+        to_send.append(file.name)
+    send_str(conn, to_send)
     return 0
 
 def handle_sent_data(conn: socket.socket, addr: tuple, data: str):
@@ -45,6 +48,7 @@ def handle_sent_data(conn: socket.socket, addr: tuple, data: str):
     kwargs = None
     if cmd == "PLAY":
         action = play_videos
+        args = [args]
         kwargs = {"folder": MEDIA_FOLDER}
     elif cmd == "STOP":
         action = stop_videos
@@ -52,6 +56,8 @@ def handle_sent_data(conn: socket.socket, addr: tuple, data: str):
         kwargs = None
     elif cmd == "PLAY_NO_PREFIX":
         action = play_videos
+        args = [args]
+        kwargs = None
     elif cmd == "LS":
         action = list_files
         args = [conn, MEDIA_FOLDER]
